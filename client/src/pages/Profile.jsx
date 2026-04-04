@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
+// API URL configuration
+const API_URL = 'https://career-counselling-app--best4zeesamcom.replit.app';
+
 function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -44,6 +47,8 @@ function Profile() {
       
       const data = await response.json();
       setUser(data);
+      // Update local storage with latest user data
+      localStorage.setItem('user', JSON.stringify(data));
       setEditForm({
         name: data.name || '',
         bio: data.bio || '',
@@ -91,6 +96,13 @@ function Profile() {
   const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Check if user is premium
+    if (!user?.isPremium) {
+      setMessage('⚠️ Resume upload is only for Premium members. Please upgrade to upload your resume.');
+      setTimeout(() => setMessage(''), 4000);
+      return;
+    }
 
     const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(file.type)) {
@@ -208,6 +220,10 @@ function Profile() {
     navigate('/login');
   };
 
+  const handleUpgradeClick = () => {
+    navigate('/premium');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -247,10 +263,42 @@ function Profile() {
 
         {/* Messages */}
         {message && (
-          <div className={`mb-4 p-3 rounded-lg ${message.includes('✅') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <div className={`mb-4 p-3 rounded-lg ${message.includes('✅') ? 'bg-green-100 text-green-700' : message.includes('⚠️') ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
             {message}
           </div>
         )}
+
+        {/* Premium Status Banner */}
+        <div className="mb-6">
+          {user?.isPremium ? (
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl shadow-md p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-white">✨ Premium Member ✨</h3>
+                  <p className="text-white opacity-90">Enjoy unlimited access to all features</p>
+                </div>
+                <span className="bg-white text-orange-600 px-3 py-1 rounded-full text-sm font-semibold">
+                  Active
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl shadow-md p-4">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-white">Upgrade to Premium!</h3>
+                  <p className="text-white opacity-90">Get unlimited access to all career paths and job listings</p>
+                </div>
+                <button
+                  onClick={handleUpgradeClick}
+                  className="bg-white text-orange-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
+                >
+                  Upgrade Now - Rs. 4,500
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - User Info */}
@@ -484,7 +532,14 @@ function Profile() {
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500 mb-4">No resume uploaded yet</p>
+                <div>
+                  <p className="text-gray-500 mb-4">No resume uploaded yet</p>
+                  {!user?.isPremium && (
+                    <div className="bg-yellow-50 p-3 rounded-lg mb-4 text-sm text-yellow-700">
+                      💡 Resume upload is a Premium feature. <Link to="/premium" className="underline font-semibold">Upgrade now</Link> to upload your resume.
+                    </div>
+                  )}
+                </div>
               )}
               
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -494,11 +549,15 @@ function Profile() {
                   accept=".pdf,.doc,.docx"
                   onChange={handleResumeUpload}
                   className="hidden"
+                  disabled={!user?.isPremium}
                 />
-                <label htmlFor="resume" className="cursor-pointer inline-block">
+                <label
+                  htmlFor="resume"
+                  className={`cursor-pointer inline-block ${!user?.isPremium ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                   <div className="text-4xl mb-2">📁</div>
                   <p className="text-blue-600 font-semibold hover:underline">
-                    Click to upload resume
+                    {user?.isPremium ? 'Click to upload resume' : 'Premium Feature'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
                     PDF, DOC, DOCX (Max 5MB)
@@ -512,17 +571,6 @@ function Profile() {
                 </div>
               )}
             </div>
-
-            {/* Premium Upgrade Card */}
-            {!user?.isPremium && (
-              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl shadow-md p-6 text-center">
-                <h3 className="text-xl font-bold text-white mb-2">Upgrade to Premium!</h3>
-                <p className="text-white mb-4">Get unlimited access to all career paths and job listings</p>
-                <button className="bg-white text-orange-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
-                  Upgrade Now - Rs. 4,500
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

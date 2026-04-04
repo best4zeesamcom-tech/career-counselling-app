@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-
+const paymentRoutes = require('./routes/paymentRoutes');
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const careerRoutes = require('./routes/careerRoutes');
@@ -13,7 +13,7 @@ const app = express();
 // Middleware - IMPORTANT: Place this BEFORE routes
 app.use(cors());
 app.use(express.json());
-
+app.use('/api/payment', paymentRoutes);
 app.use('/uploads', express.static('uploads'));
 // MongoDB Connection
 const connectDB = async () => {
