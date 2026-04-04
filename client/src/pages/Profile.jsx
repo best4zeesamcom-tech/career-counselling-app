@@ -31,7 +31,7 @@ function Profile() {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/me', {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: { 'x-auth-token': token }
       });
       
@@ -63,7 +63,7 @@ function Profile() {
       const token = localStorage.getItem('token');
       console.log('Fetching saved jobs...');
       
-      const response = await fetch('http://localhost:5000/api/jobs/saved', {
+      const response = await fetch(`${API_URL}/api/jobs/saved`, {
         headers: { 'x-auth-token': token }
       });
       
@@ -111,7 +111,7 @@ function Profile() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/jobs/upload-resume', {
+      const response = await fetch(`${API_URL}/api/jobs/upload-resume`, {
         method: 'POST',
         headers: { 'x-auth-token': token },
         body: formData
@@ -137,7 +137,7 @@ function Profile() {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/jobs/resume', {
+      const response = await fetch(`${API_URL}/api/jobs/resume`, {
         method: 'DELETE',
         headers: { 'x-auth-token': token }
       });
@@ -158,7 +158,7 @@ function Profile() {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/update', {
+      const response = await fetch(`${API_URL}/api/auth/update`, {
         method: 'PUT',
         headers: {
           'x-auth-token': token,
@@ -187,7 +187,7 @@ function Profile() {
   const removeSavedJob = async (jobId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/jobs/unsave/${jobId}`, {
+      const response = await fetch(`${API_URL}/api/jobs/unsave/${jobId}`, {
         method: 'DELETE',
         headers: { 'x-auth-token': token }
       });
@@ -468,7 +468,7 @@ function Profile() {
                   </p>
                   <div className="flex gap-3 mt-3">
                     <a
-                      href={`http://localhost:5000/${user.resume.path}`}
+                      href={`${API_URL}/${user.resume.path}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline text-sm"

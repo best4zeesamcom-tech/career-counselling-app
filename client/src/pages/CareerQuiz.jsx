@@ -54,7 +54,7 @@ function CareerQuiz() {
     setLoading(true);
     try {
       // Fetch all careers from API
-      const response = await fetch('http://localhost:5000/api/careers');
+      const response = await fetch(`${API_URL}/api/careers`);
       const allCareers = await response.json();
       
       // Filter careers based on user answers

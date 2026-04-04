@@ -21,7 +21,7 @@ function Jobs() {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/jobs');
+      const response = await fetch(`${API_URL}/api/jobs`);
       const data = await response.json();
       setJobs(data);
     } catch (err) {
@@ -40,7 +40,7 @@ function Jobs() {
 
     setSaving({ ...saving, [jobId]: true });
     try {
-      const response = await fetch(`http://localhost:5000/api/jobs/save/${jobId}`, {
+      const response = await fetch(`${API_URL}/api/jobs/save/${jobId}`, {
         method: 'POST',
         headers: {
           'x-auth-token': token,

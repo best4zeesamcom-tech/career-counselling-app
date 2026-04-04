@@ -17,7 +17,7 @@ function Careers() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`http://localhost:5000/api/careers/level/${selectedLevel}`);
+      const response = await fetch(`${API_URL}/api/careers/level/${selectedLevel}`);
       const data = await response.json();
       setCareers(data);
     } catch (err) {

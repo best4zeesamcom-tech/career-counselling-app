@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-
+import API_URL from '../config';
 function CareerDetail() {
   const { id } = useParams();
   const [career, setCareer] = useState(null);
@@ -13,7 +13,8 @@ function CareerDetail() {
 
   const fetchCareer = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/careers/${id}`);
+      const response = await fetch(`${API_URL}/api/jobs`);
+
       const data = await response.json();
       setCareer(data);
     } catch (err) {

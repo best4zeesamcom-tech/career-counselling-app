@@ -8,7 +8,7 @@ function Home() {
 
   const testBackend = async () => {
     try {
-      const res = await fetch('http://localhost:5000/');
+      const res = await fetch(`${API_URL}/`);
       const data = await res.json();
       setMessage(data.message);
     } catch (error) {
