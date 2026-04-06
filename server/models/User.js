@@ -121,6 +121,18 @@ const UserSchema = new mongoose.Schema({
     enum: ['active', 'suspended', 'deleted'],
     default: 'active'
   }
+  ,resetPasswordToken: {      // ← ADD THIS
+    type: String,
+    default: null
+  },
+  resetPasswordExpires: {    // ← ADD THIS
+    type: Date,
+    default: null
+  },
+  jobAlertEnabled: {         // ← ADD THIS
+    type: Boolean,
+    default: true
+  }
 });
 
 // Add a method to check if user is premium and not expired
