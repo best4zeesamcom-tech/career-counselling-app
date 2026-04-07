@@ -1,8 +1,24 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const session = require('express-session');
+const passport = require('./config/passport');
 require('dotenv').config();
+
+// IMPORTANT: Create app FIRST
+const app = express();
+
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+const careerRoutes = require('./routes/careerRoutes');
+const jobRoutes = require('./routes/jobRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+
+// ========== MIDDLEWARE (in correct order) ==========
+app.use(cors());
+app.use(express.json());
+
+// Session middleware (before passport)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret_key',
   resave: false,
@@ -12,40 +28,21 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
-// Import routes
-const authRoutes = require('./routes/authRoutes');
-const careerRoutes = require('./routes/careerRoutes');
-const jobRoutes = require('./routes/jobRoutes');
-const session = require('express-session');
-const passport = require('./config/passport');
-const app = express();
 
-// Middleware - IMPORTANT: Place this BEFORE routes
-app.use(cors());
-app.use(express.json());
-app.use('/api/payment', paymentRoutes);
-app.use('/uploads', express.static('uploads'));
+// Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
-// MongoDB Connection
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/career-app');
-        console.log('✅ MongoDB Connected Successfully');
-    } catch (error) {
-        console.error('❌ MongoDB Connection Error:', error.message);
-        process.exit(1);
-    }
-};
 
-connectDB();
+// Static files
+app.use('/uploads', express.static('uploads'));
 
-// Routes - ORDER MATTERS: Specific routes before general ones
+// ========== ROUTES ==========
 app.use('/api/auth', authRoutes);
 app.use('/api/careers', careerRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/api/payment', paymentRoutes);
 
-// Basic route
+// ========== BASIC ROUTES ==========
 app.get('/', (req, res) => {
     res.json({ 
         message: 'Career Counselling API is running 🚀',
@@ -59,7 +56,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'healthy', 
@@ -68,7 +64,20 @@ app.get('/health', (req, res) => {
     });
 });
 
-// 404 handler for undefined routes
+// ========== MONGODB CONNECTION ==========
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/career-app');
+        console.log('✅ MongoDB Connected Successfully');
+    } catch (error) {
+        console.error('❌ MongoDB Connection Error:', error.message);
+        process.exit(1);
+    }
+};
+
+connectDB();
+
+// ========== ERROR HANDLERS (at the end) ==========
 app.use((req, res) => {
     res.status(404).json({ 
         message: 'Route not found',
@@ -77,7 +86,6 @@ app.use((req, res) => {
     });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ 
@@ -86,6 +94,7 @@ app.use((err, req, res, next) => {
     });
 });
 
+// ========== START SERVER ==========
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
