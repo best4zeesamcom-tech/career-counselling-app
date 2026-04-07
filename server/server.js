@@ -3,15 +3,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const session = require('express-session');
-require('./config/passport'); // just run the config
-const passport = require('passport'); // actual instance
+const passport = require('passport'); // Move this UP
+
+// Import passport config (this will add strategies to passport)
+require('./config/passport'); // This loads the strategies
 
 console.log("🔍 ENV CHECK:", {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "✅ FOUND" : "❌ MISSING",
-  FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID ? "✅ FOUND" : "❌ MISSING"
+  FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID ? "✅ FOUND" : "❌ MISSING",
+  BACKEND_URL: process.env.BACKEND_URL || "http://localhost:5000"
 });
 
-// IMPORTANT: Create app FIRST
 const app = express();
 
 // Import routes
@@ -20,8 +22,11 @@ const careerRoutes = require('./routes/careerRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-// ========== MIDDLEWARE (in correct order) ==========
-app.use(cors());
+// ========== MIDDLEWARE (correct order) ==========
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 
 // Session middleware (before passport)
@@ -30,7 +35,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false,
+    secure: false, // Set to true if using HTTPS
     maxAge: 24 * 60 * 60 * 1000
   }
 }));

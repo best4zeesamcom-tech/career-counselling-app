@@ -9,24 +9,33 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    // Check if user already exists
+    let existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = new User({ name, email, password: hashedPassword });
+    // Create user
+    const user = new User({ 
+      name, 
+      email, 
+      password: hashedPassword,
+      isVerified: true // Since they registered with email/password
+    });
     await user.save();
 
-    // Send welcome email
+    // Send welcome email (don't block on error)
     try {
       await sendWelcomeEmail(user.email, user.name);
     } catch (emailError) {
       console.error('Welcome email failed:', emailError);
     }
 
+    // Generate JWT
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -55,18 +64,22 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Update last login
     await user.updateLastLogin();
 
+    // Generate JWT
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -99,7 +112,7 @@ exports.getMe = async (req, res) => {
     }
     res.json(user);
   } catch (error) {
-    console.error(error);
+    console.error('Get me error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -124,7 +137,7 @@ exports.updateProfile = async (req, res) => {
     
     res.json(user);
   } catch (error) {
-    console.error(error);
+    console.error('Update profile error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -139,11 +152,13 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
     
+    // Send reset email
     try {
       await sendPasswordResetEmail(user.email, resetToken, user.name);
       res.json({ message: 'Password reset email sent' });
@@ -152,7 +167,7 @@ exports.forgotPassword = async (req, res) => {
       res.status(500).json({ message: 'Failed to send email' });
     }
   } catch (error) {
-    console.error(error);
+    console.error('Forgot password error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -171,6 +186,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired token' });
     }
     
+    // Hash new password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     user.resetPasswordToken = undefined;
@@ -179,35 +195,97 @@ exports.resetPassword = async (req, res) => {
     
     res.json({ message: 'Password reset successful' });
   } catch (error) {
-    console.error(error);
+    console.error('Reset password error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
-// Social Login Success
+
+// ========== SOCIAL LOGIN HANDLERS ==========
+
+// Social Login Success Handler
 exports.socialLoginSuccess = async (req, res) => {
   try {
-    const user = req.user;
+    console.log("✅ Social login success for user:", req.user?.email);
+    
+    // Make sure user exists
+    if (!req.user) {
+      throw new Error('No user data from OAuth');
+    }
+    
+    // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: req.user._id, email: req.user.email },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
     
-    // Redirect to frontend with token
+    // Prepare user data for frontend
+    const userData = {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      isPremium: req.user.isPremium || false
+    };
+    
+    // Encode user data for URL
+    const encodedUserData = encodeURIComponent(JSON.stringify(userData));
+    
+    // Get frontend URL from env or use default
     const frontendUrl = process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app';
-    res.redirect(`${frontendUrl}/social-login?token=${token}&user=${JSON.stringify({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      isPremium: user.isPremium
-    })}`);
+    
+    // Redirect to frontend with token and user data
+    res.redirect(`${frontendUrl}/social-login?token=${token}&user=${encodedUserData}`);
+    
   } catch (error) {
-    console.error('Social login success error:', error);
-    res.redirect(`${process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app'}/login?error=social_login_failed`);
+    console.error('❌ Social login success error:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app';
+    res.redirect(`${frontendUrl}/login?error=social_login_failed&message=${encodeURIComponent(error.message)}`);
   }
 };
 
-// Social Login Failed
+// Social Login Failed Handler
 exports.socialLoginFailed = (req, res) => {
-  res.redirect(`${process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app'}/login?error=social_login_failed`);
+  console.log("❌ Social login failed");
+  const frontendUrl = process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app';
+  res.redirect(`${frontendUrl}/login?error=social_auth_failed`);
+};
+
+// ========== HELPER FUNCTIONS ==========
+
+// Check if user is premium (for middleware)
+exports.checkPremium = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user.isPremium) {
+      return res.status(403).json({ message: 'Premium subscription required' });
+    }
+    next();
+  } catch (error) {
+    console.error('Premium check error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Upgrade to premium
+exports.upgradeToPremium = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    user.isPremium = true;
+    user.premiumSince = new Date();
+    await user.save();
+    
+    res.json({ 
+      message: 'Account upgraded to premium successfully!',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isPremium: user.isPremium,
+        premiumSince: user.premiumSince
+      }
+    });
+  } catch (error) {
+    console.error('Upgrade to premium error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
