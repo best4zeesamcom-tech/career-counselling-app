@@ -1,9 +1,10 @@
-const passport = require('passport');
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-
+const passport = require('passport');
 // Serialize user for session
 passport.serializeUser((user, done) => {
   done(null, user.id);

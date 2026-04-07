@@ -1,10 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const session = require('express-session');
-const passport = require('./config/passport');
-require('dotenv').config();
+require('./config/passport'); // just run the config
+const passport = require('passport'); // actual instance
 
+console.log("ENV CHECK:", {
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "FOUND" : "MISSING"
+});
 // IMPORTANT: Create app FIRST
 const app = express();
 
