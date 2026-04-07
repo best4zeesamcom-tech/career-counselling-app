@@ -3,7 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const auth = require('../middleware/auth');
 // Remove this line - passport is already available globally
- const passport = require('../config/passport');
+const passport = require('passport');
 
 // ========== LOCAL AUTH ROUTES ==========
 router.post('/register', authController.register);

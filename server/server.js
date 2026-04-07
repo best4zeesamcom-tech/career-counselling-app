@@ -3,10 +3,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const session = require('express-session');
-const passport = require('passport'); // Move this UP
+const passport = require('passport');
 
-// Import passport config (this will add strategies to passport)
-require('./config/passport'); // This loads the strategies
+// Import passport config
+require('./config/passport');
 
 console.log("🔍 ENV CHECK:", {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "✅ FOUND" : "❌ MISSING",
@@ -22,20 +22,20 @@ const careerRoutes = require('./routes/careerRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
-// ========== MIDDLEWARE (correct order) ==========
+// ========== MIDDLEWARE ==========
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 app.use(express.json());
 
-// Session middleware (before passport)
+// Session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret_key',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true if using HTTPS
+    secure: false,
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
@@ -54,6 +54,37 @@ console.log("🔗 Auth routes mounted at /api/auth");
 app.use('/api/careers', careerRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/payment', paymentRoutes);
+
+// ========== DEBUG ROUTE - Add this to see all registered routes ==========
+app.get('/debug-routes', (req, res) => {
+  const routes = [];
+  
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      // Routes registered directly on app
+      routes.push({
+        path: middleware.route.path,
+        methods: Object.keys(middleware.route.methods)
+      });
+    } else if (middleware.name === 'router') {
+      // Routes registered as routers
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          routes.push({
+            path: handler.route.path,
+            methods: Object.keys(handler.route.methods)
+          });
+        }
+      });
+    }
+  });
+  
+  res.json({
+    totalRoutes: routes.length,
+    routes: routes,
+    authRoutesExist: routes.some(r => r.path.includes('/auth/google'))
+  });
+});
 
 // ========== BASIC ROUTES ==========
 app.get('/', (req, res) => {
@@ -90,12 +121,13 @@ const connectDB = async () => {
 
 connectDB();
 
-// ========== ERROR HANDLERS (at the end) ==========
+// ========== ERROR HANDLERS (MUST BE LAST) ==========
 app.use((req, res) => {
+    console.log(`❌ 404: ${req.method} ${req.url}`);
     res.status(404).json({ 
         message: 'Route not found',
         requestedUrl: req.url,
-        availableEndpoints: ['/', '/health', '/api/auth', '/api/careers', '/api/jobs']
+        availableEndpoints: ['/', '/health', '/api/auth', '/api/careers', '/api/jobs', '/debug-routes']
     });
 });
 
@@ -113,6 +145,7 @@ app.listen(PORT, () => {
     console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`📡 API URL: http://localhost:${PORT}`);
     console.log(`❤️  Health check: http://localhost:${PORT}/health`);
+    console.log(`🔍 Debug routes: http://localhost:${PORT}/debug-routes`);
     console.log(`📋 Jobs API: http://localhost:${PORT}/api/jobs`);
     console.log(`🎓 Careers API: http://localhost:${PORT}/api/careers\n`);
 });
