@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
+import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import Careers from './pages/Careers';
 import CareerDetail from './pages/CareerDetail';
@@ -11,6 +12,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import SocialLogin from './pages/SocialLogin';
+import Pricing from './pages/Pricing';  // ✅ Add this import
+import PaymentSuccess from './pages/PaymentSuccess';  // ✅ Optional: for after payment
 
 function App() {
   return (
@@ -28,6 +31,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/social-login" element={<SocialLogin />} />
+          <Route path="/pricing" element={<Pricing />} />  {/* ✅ Add pricing route */}
+          <Route path="/payment-success" element={<PaymentSuccess />} />  {/* ✅ Optional */}
+          <Route path="*" element={<NotFound />} />
+
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>

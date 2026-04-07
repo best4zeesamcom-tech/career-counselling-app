@@ -6,10 +6,12 @@ function Navbar() {
   
   // Safe way to get user data
   let user = {};
+  let isPremium = false;
   try {
     const userData = localStorage.getItem('user');
     if (userData && userData !== 'undefined') {
       user = JSON.parse(userData);
+      isPremium = user.isPremium || false;
     }
   } catch (error) {
     console.error('Error parsing user data:', error);
@@ -35,11 +37,28 @@ function Navbar() {
             ✨ Quiz
           </Link>
           <Link to="/jobs" className="hover:text-blue-200 transition">Jobs</Link>
+          <Link to="/pricing" className="hover:text-blue-200 transition">Pricing</Link>
+          
           {token ? (
             <>
               <Link to="/profile" className="hover:text-blue-200 transition">
                 👤 {user?.name?.split(' ')[0] || 'Profile'}
               </Link>
+              {/* Show Upgrade button only if user is NOT premium */}
+              {!isPremium && (
+                <Link 
+                  to="/pricing" 
+                  className="bg-yellow-500 px-3 py-1 rounded-full hover:bg-yellow-600 transition font-semibold"
+                >
+                  ⭐ Upgrade
+                </Link>
+              )}
+              {/* Show Premium badge if user IS premium */}
+              {isPremium && (
+                <span className="bg-yellow-500 px-3 py-1 rounded-full text-sm font-semibold">
+                  ⭐ PREMIUM
+                </span>
+              )}
               <button onClick={handleLogout} className="hover:text-blue-200 transition">
                 Logout
               </button>

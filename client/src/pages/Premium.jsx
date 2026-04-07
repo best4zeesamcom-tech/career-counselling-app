@@ -11,6 +11,10 @@ function Premium() {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+  // REPLACE WITH YOUR ACTUAL PHONE NUMBER
+  const YOUR_JAZZCASH_NUMBER = '03160522774'; // CHANGE THIS
+  const YOUR_EASYPAISA_NUMBER = '03160522774'; // CHANGE THIS
+
   useEffect(() => {
     if (token) {
       fetchPremiumStatus();
@@ -50,41 +54,35 @@ function Premium() {
     }
 
     setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/api/payment/create-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        },
-        body: JSON.stringify({ 
-          amount, 
-          plan, 
-          method 
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('Payment successful! You are now a premium member.');
-        fetchPremiumStatus();
-        fetchPaymentHistory();
-        
-        // Update local user data
-        const updatedUser = { ...user, isPremium: true };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        
-        navigate('/profile');
-      } else {
-        alert('Payment failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      alert('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
+    
+    // Store payment info for manual verification
+    localStorage.setItem('pendingPaymentMethod', method);
+    localStorage.setItem('pendingUpgrade', plan);
+    localStorage.setItem('pendingAmount', amount);
+    localStorage.setItem('pendingUserEmail', user.email);
+    
+    // Get the correct phone number based on payment method
+    const phoneNumber = method === 'JazzCash' ? YOUR_JAZZCASH_NUMBER : YOUR_EASYPAISA_NUMBER;
+    
+    // Create payment message
+    const paymentMessage = `*CAREERGUIDE PREMIUM UPGRADE*%0A%0A💰 Amount: Rs. ${amount}%0A📱 Method: ${method}%0A📧 Email: ${user.email}%0A🎯 Plan: Premium Lifetime%0A%0A📲 Send payment to:%0A${method}: ${phoneNumber}%0AAccount: CareerGuide%0A%0AAfter payment, click OK to verify.`;
+    
+    // Show payment instructions
+    const confirmed = confirm(
+      `💳 PAYMENT INSTRUCTIONS\n\n` +
+      `Amount: Rs. ${amount}\n` +
+      `Method: ${method}\n` +
+      `Send to: ${phoneNumber}\n` +
+      `Reference: ${user.email}\n\n` +
+      `After sending payment, click OK to confirm.`
+    );
+    
+    if (confirmed) {
+      // Redirect to payment success page with manual mode
+      navigate(`/payment-success?payment_method=${method}&amount=${amount}&plan=${plan}&manual=true&email=${user.email}`);
     }
+    
+    setLoading(false);
   };
 
   const plans = [
@@ -187,14 +185,14 @@ function Premium() {
                         disabled={loading}
                         className="w-full bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition disabled:opacity-50"
                       >
-                        {loading ? 'Processing...' : 'Pay with JazzCash'}
+                        {loading ? 'Processing...' : '💳 Pay with JazzCash'}
                       </button>
                       <button
                         onClick={() => handleUpgrade(plan.id, plan.price, 'EasyPaisa')}
                         disabled={loading}
                         className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
                       >
-                        {loading ? 'Processing...' : 'Pay with EasyPaisa'}
+                        {loading ? 'Processing...' : '📱 Pay with EasyPaisa'}
                       </button>
                     </div>
                   )
@@ -211,40 +209,25 @@ function Premium() {
           ))}
         </div>
 
-        {/* Payment History */}
-        {paymentHistory.length > 0 && (
-          <div className="max-w-4xl mx-auto mt-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Payment History</h2>
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Amount</th>
-                    <th className="px-4 py-2 text-left">Method</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paymentHistory.map((payment, idx) => (
-                    <tr key={idx} className="border-t">
-                      <td className="px-4 py-2">{new Date(payment.date).toLocaleDateString()}</td>
-                      <td className="px-4 py-2">Rs. {payment.amount}</td>
-                      <td className="px-4 py-2">{payment.method}</td>
-                      <td className="px-4 py-2">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          payment.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {payment.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Payment Instructions */}
+        <div className="max-w-4xl mx-auto mt-12 bg-blue-50 rounded-xl p-6">
+          <h3 className="text-lg font-bold text-center mb-4">📱 Payment Instructions</h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="bg-white p-4 rounded-lg">
+              <p className="font-semibold text-yellow-600">JazzCash:</p>
+              <p>Send Rs. 4,500 to: <strong>{YOUR_JAZZCASH_NUMBER}</strong></p>
+              <p className="text-xs text-gray-500 mt-1">Reference: Your email address</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg">
+              <p className="font-semibold text-green-600">EasyPaisa:</p>
+              <p>Send Rs. 4,500 to: <strong>{YOUR_EASYPAISA_NUMBER}</strong></p>
+              <p className="text-xs text-gray-500 mt-1">Reference: Your email address</p>
             </div>
           </div>
-        )}
+          <p className="text-center text-xs text-gray-600 mt-4">
+            ⏳ Account upgraded within 1 hour after payment confirmation
+          </p>
+        </div>
 
         {!token && (
           <div className="text-center mt-8">

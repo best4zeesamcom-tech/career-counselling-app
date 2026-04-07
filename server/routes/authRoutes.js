@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const auth = require('../middleware/auth');
-// Remove this line - passport is already available globally
 const passport = require('passport');
 
 // ========== LOCAL AUTH ROUTES ==========
@@ -12,6 +11,9 @@ router.get('/me', auth, authController.getMe);
 router.put('/update', auth, authController.updateProfile);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
+
+// ========== UPGRADE TO PREMIUM ROUTE ==========
+router.post('/upgrade', auth, authController.upgradeToPremium);  // ✅ ADD THIS LINE
 
 // ========== GOOGLE OAUTH ROUTES ==========
 router.get('/google',

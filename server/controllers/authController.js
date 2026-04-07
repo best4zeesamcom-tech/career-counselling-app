@@ -289,3 +289,25 @@ exports.upgradeToPremium = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+exports.upgradeToPremium = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    user.isPremium = true;
+    user.premiumSince = new Date();
+    await user.save();
+    
+    res.json({ 
+      message: 'Account upgraded to premium successfully!',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isPremium: user.isPremium,
+        premiumSince: user.premiumSince
+      }
+    });
+  } catch (error) {
+    console.error('Upgrade to premium error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
