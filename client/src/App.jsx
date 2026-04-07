@@ -10,6 +10,7 @@ import QuizResults from './pages/QuizResults';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import SocialLogin from './pages/SocialLogin';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/social-login" element={<SocialLogin />} />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>
