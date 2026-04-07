@@ -3,11 +3,21 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 const paymentRoutes = require('./routes/paymentRoutes');
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'secret_key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const careerRoutes = require('./routes/careerRoutes');
 const jobRoutes = require('./routes/jobRoutes');
-
+const session = require('express-session');
+const passport = require('./config/passport');
 const app = express();
 
 // Middleware - IMPORTANT: Place this BEFORE routes
@@ -15,6 +25,8 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/payment', paymentRoutes);
 app.use('/uploads', express.static('uploads'));
+app.use(passport.initialize());
+app.use(passport.session());
 // MongoDB Connection
 const connectDB = async () => {
     try {

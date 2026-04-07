@@ -183,3 +183,31 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+// Social Login Success
+exports.socialLoginSuccess = async (req, res) => {
+  try {
+    const user = req.user;
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    // Redirect to frontend with token
+    const frontendUrl = process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app';
+    res.redirect(`${frontendUrl}/social-login?token=${token}&user=${JSON.stringify({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      isPremium: user.isPremium
+    })}`);
+  } catch (error) {
+    console.error('Social login success error:', error);
+    res.redirect(`${process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app'}/login?error=social_login_failed`);
+  }
+};
+
+// Social Login Failed
+exports.socialLoginFailed = (req, res) => {
+  res.redirect(`${process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app'}/login?error=social_login_failed`);
+};
