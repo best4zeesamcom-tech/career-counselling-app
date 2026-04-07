@@ -6,9 +6,11 @@ const session = require('express-session');
 require('./config/passport'); // just run the config
 const passport = require('passport'); // actual instance
 
-console.log("ENV CHECK:", {
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "FOUND" : "MISSING"
+console.log("🔍 ENV CHECK:", {
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "✅ FOUND" : "❌ MISSING",
+  FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID ? "✅ FOUND" : "❌ MISSING"
 });
+
 // IMPORTANT: Create app FIRST
 const app = express();
 
@@ -42,6 +44,8 @@ app.use('/uploads', express.static('uploads'));
 
 // ========== ROUTES ==========
 app.use('/api/auth', authRoutes);
+console.log("🔗 Auth routes mounted at /api/auth");
+
 app.use('/api/careers', careerRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/payment', paymentRoutes);
@@ -91,7 +95,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error('❌ Error:', err.stack);
     res.status(500).json({ 
         message: 'Something went wrong!',
         error: err.message 
@@ -101,9 +105,9 @@ app.use((err, req, res, next) => {
 // ========== START SERVER ==========
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`📡 API URL: http://localhost:${PORT}`);
     console.log(`❤️  Health check: http://localhost:${PORT}/health`);
     console.log(`📋 Jobs API: http://localhost:${PORT}/api/jobs`);
-    console.log(`🎓 Careers API: http://localhost:${PORT}/api/careers`);
+    console.log(`🎓 Careers API: http://localhost:${PORT}/api/careers\n`);
 });
