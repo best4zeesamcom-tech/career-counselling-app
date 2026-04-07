@@ -35,4 +35,12 @@ router.get('/facebook/callback',
 // ========== SOCIAL LOGIN CALLBACK ==========
 router.get('/social-failed', authController.socialLoginFailed);
 
+// ========== DEBUG: Log all registered routes ==========
+console.log("✅ Auth routes registered:");
+router.stack.forEach(r => {
+  if (r.route && r.route.path) {
+    console.log(`  - ${Object.keys(r.route.methods).join(', ').toUpperCase()} /api/auth${r.route.path}`);
+  }
+});
+
 module.exports = router;
