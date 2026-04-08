@@ -24,11 +24,11 @@ exports.register = async (req, res) => {
       name, 
       email, 
       password: hashedPassword,
-      isVerified: true // Since they registered with email/password
+      isVerified: true
     });
     await user.save();
 
-    // Send welcome email (don't block on error)
+    // Send welcome email
     try {
       await sendWelcomeEmail(user.email, user.name);
     } catch (emailError) {
@@ -155,7 +155,7 @@ exports.forgotPassword = async (req, res) => {
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
     
     // Send reset email
@@ -200,58 +200,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// ========== SOCIAL LOGIN HANDLERS ==========
-
-// Social Login Success Handler
-exports.socialLoginSuccess = async (req, res) => {
-  try {
-    console.log("✅ Social login success for user:", req.user?.email);
-    
-    // Make sure user exists
-    if (!req.user) {
-      throw new Error('No user data from OAuth');
-    }
-    
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: req.user._id, email: req.user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    // Prepare user data for frontend
-    const userData = {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      isPremium: req.user.isPremium || false
-    };
-    
-    // Encode user data for URL
-    const encodedUserData = encodeURIComponent(JSON.stringify(userData));
-    
-    // Get frontend URL from env or use default
-    const frontendUrl = process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app';
-    
-    // Redirect to frontend with token and user data
-    res.redirect(`${frontendUrl}/social-login?token=${token}&user=${encodedUserData}`);
-    
-  } catch (error) {
-    console.error('❌ Social login success error:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app';
-    res.redirect(`${frontendUrl}/login?error=social_login_failed&message=${encodeURIComponent(error.message)}`);
-  }
-};
-
-// Social Login Failed Handler
-exports.socialLoginFailed = (req, res) => {
-  console.log("❌ Social login failed");
-  const frontendUrl = process.env.FRONTEND_URL || 'https://career-counselling-app-kappa.vercel.app';
-  res.redirect(`${frontendUrl}/login?error=social_auth_failed`);
-};
-
-// ========== HELPER FUNCTIONS ==========
-
 // Check if user is premium (for middleware)
 exports.checkPremium = async (req, res, next) => {
   try {
@@ -267,28 +215,6 @@ exports.checkPremium = async (req, res, next) => {
 };
 
 // Upgrade to premium
-exports.upgradeToPremium = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    user.isPremium = true;
-    user.premiumSince = new Date();
-    await user.save();
-    
-    res.json({ 
-      message: 'Account upgraded to premium successfully!',
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        isPremium: user.isPremium,
-        premiumSince: user.premiumSince
-      }
-    });
-  } catch (error) {
-    console.error('Upgrade to premium error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
 exports.upgradeToPremium = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
