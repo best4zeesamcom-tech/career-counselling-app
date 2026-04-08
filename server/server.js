@@ -102,3 +102,8 @@ app.use((err, req, res, next) => {
         error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
     });
 });
+
+
+console.log("🔍 Auth routes type:", typeof authRoutes);
+console.log("🔍 Auth routes methods:", Object.keys(authRoutes));
+console.log("🔍 Auth routes stack:", authRoutes.stack);
